@@ -22,3 +22,6 @@ Thumbs.db
 
 # ---logs---
 *.log
+# ignore Maven wrapper help
+hackhub/HELP.md
+
