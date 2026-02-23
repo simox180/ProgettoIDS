@@ -68,6 +68,12 @@ X-Session-Token: <token>
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\auth-smoke.ps1
 ```
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\e2e-smoke.ps1
+```
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\e2e-full.ps1
+```
 
 Parametri opzionali comuni:
 - `-BaseUrl http://localhost:8080`
