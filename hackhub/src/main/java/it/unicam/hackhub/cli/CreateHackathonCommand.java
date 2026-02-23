@@ -50,24 +50,24 @@ public class CreateHackathonCommand implements Command {
 
             String name = inputHelper.readNonBlank("Nome hackathon");
             String regulation = inputHelper.readLine("Regolamento");
-            LocalDate regDeadline = readDate("Registration deadline (yyyy-MM-dd)");
             LocalDate startDate = readDate("Start date (yyyy-MM-dd)");
-            LocalDate endDate = readDate("End date (yyyy-MM-dd)");
-            LocalDate submissionDeadline = readDate("Submission deadline (yyyy-MM-dd)");
+            LocalDate endDate = readEndDateAfterStart(startDate);
+            LocalDate regDeadline = readRegistrationDeadlineBeforeStart(startDate);
+            LocalDate submissionDeadline = readSubmissionDeadlineInWindow(startDate, endDate);
             String location = inputHelper.readNonBlank("Location");
-            double prizeAmount = readDouble("Prize amount");
+            double prizeAmount = readNonNegativeDouble("Prize amount");
             int maxTeamSize = readPositiveInt("Max team size");
 
-            List<HackathonController.StaffSelectView> selectableStaff =
-                    hackathonController.listSelectableStaff(currentStaffId.get());
-            if (selectableStaff.isEmpty()) {
-                System.out.println("Nessuno staff disponibile.");
+            List<HackathonController.StaffSelectView> selectableJudges =
+                    hackathonController.listSelectableStaffByRole(currentStaffId.get(), StaffRole.JUDGE);
+            if (selectableJudges.isEmpty()) {
+                System.out.println("Nessun judge selezionabile disponibile.");
                 return;
             }
 
             Set<Long> selectableJudgeIds = new LinkedHashSet<>();
             List<List<String>> judgeRows = new ArrayList<>();
-            for (HackathonController.StaffSelectView staff : selectableStaff) {
+            for (HackathonController.StaffSelectView staff : selectableJudges) {
                 long staffId = staff.staffId();
                 selectableJudgeIds.add(staffId);
                 judgeRows.add(List.of(
@@ -76,16 +76,14 @@ public class CreateHackathonCommand implements Command {
                         staff.name()
                 ));
             }
-            if (selectableJudgeIds.isEmpty()) {
-                System.out.println("Nessun judge selezionabile disponibile.");
-                return;
-            }
             TablePrinter.print(List.of("STAFF_ID", "USERNAME", "NAME"), judgeRows);
-            long judgeStaffId = readSingleStaffId("Judge id", selectableJudgeIds);
+            long judgeStaffId = readJudgeId("Judge id", selectableJudgeIds);
 
+            List<HackathonController.StaffSelectView> selectableMentors =
+                    hackathonController.listSelectableStaffByRole(currentStaffId.get(), StaffRole.MENTOR);
             Set<Long> selectableMentorIds = new LinkedHashSet<>();
             List<List<String>> mentorRows = new ArrayList<>();
-            for (HackathonController.StaffSelectView staff : selectableStaff) {
+            for (HackathonController.StaffSelectView staff : selectableMentors) {
                 long staffId = staff.staffId();
                 if (staffId == judgeStaffId) {
                     continue;
@@ -141,11 +139,49 @@ public class CreateHackathonCommand implements Command {
         }
     }
 
-    private double readDouble(String prompt) {
+    private LocalDate readEndDateAfterStart(LocalDate startDate) {
+        while (true) {
+            LocalDate endDate = readDate("End date (yyyy-MM-dd)");
+            if (!endDate.isAfter(startDate)) {
+                System.out.println("End date deve essere dopo Start date");
+                continue;
+            }
+            return endDate;
+        }
+    }
+
+    private LocalDate readRegistrationDeadlineBeforeStart(LocalDate startDate) {
+        while (true) {
+            LocalDate registrationDeadline = readDate("Registration deadline (yyyy-MM-dd)");
+            if (!registrationDeadline.isBefore(startDate)) {
+                System.out.println("Registration deadline deve essere prima dello Start date");
+                continue;
+            }
+            return registrationDeadline;
+        }
+    }
+
+    private LocalDate readSubmissionDeadlineInWindow(LocalDate startDate, LocalDate endDate) {
+        while (true) {
+            LocalDate submissionDeadline = readDate("Submission deadline (yyyy-MM-dd)");
+            if (submissionDeadline.isBefore(startDate) || submissionDeadline.isAfter(endDate)) {
+                System.out.println("Submission deadline deve essere compresa tra Start date ed End date");
+                continue;
+            }
+            return submissionDeadline;
+        }
+    }
+
+    private double readNonNegativeDouble(String prompt) {
         while (true) {
             String raw = inputHelper.readNonBlank(prompt).trim();
             try {
-                return Double.parseDouble(raw);
+                double value = Double.parseDouble(raw);
+                if (Double.isNaN(value) || Double.isInfinite(value) || value < 0) {
+                    System.out.println("Valore non valido.");
+                    continue;
+                }
+                return value;
             } catch (NumberFormatException ex) {
                 System.out.println("Valore numerico non valido.");
             }
@@ -163,13 +199,13 @@ public class CreateHackathonCommand implements Command {
         }
     }
 
-    private long readSingleStaffId(String prompt, Set<Long> allowedIds) {
+    private long readJudgeId(String prompt, Set<Long> allowedIds) {
         while (true) {
             long staffId = inputHelper.readLong(prompt);
             if (allowedIds.contains(staffId)) {
                 return staffId;
             }
-            System.out.println("Staff id non valido.");
+            System.out.println("ID judge non valido");
         }
     }
 

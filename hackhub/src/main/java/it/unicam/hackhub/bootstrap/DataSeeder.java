@@ -20,6 +20,9 @@ public class DataSeeder implements CommandLineRunner {
     private static final String ORGANIZER_USERNAME = "organizer1";
     private static final String JUDGE_USERNAME = "judge1";
     private static final String MENTOR_USERNAME = "mentor1";
+    private static final String ORGANIZER_TWO_USERNAME = "organizer2";
+    private static final String JUDGE_TWO_USERNAME = "judge2";
+    private static final String MENTOR_TWO_USERNAME = "mentor2";
 
     private final StaffMemberRepository staffMemberRepository;
     private final HackathonRepository hackathonRepository;
@@ -39,9 +42,12 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     public void seed() {
-        StaffMember organizer = ensureStaff("Organizer One", ORGANIZER_USERNAME, "organizer1pass");
-        StaffMember judge = ensureStaff("Judge One", JUDGE_USERNAME, "judge1pass");
-        StaffMember mentor = ensureStaff("Mentor One", MENTOR_USERNAME, "mentor1pass");
+        StaffMember organizerOne = ensureStaff("Organizer One", ORGANIZER_USERNAME, "organizer1pass");
+        StaffMember judgeOne = ensureStaff("Judge One", JUDGE_USERNAME, "judge1pass");
+        StaffMember mentorOne = ensureStaff("Mentor One", MENTOR_USERNAME, "mentor1pass");
+        StaffMember organizerTwo = ensureStaff("Organizer Two", ORGANIZER_TWO_USERNAME, "organizer2pass");
+        StaffMember judgeTwo = ensureStaff("Judge Two", JUDGE_TWO_USERNAME, "judge2pass");
+        StaffMember mentorTwo = ensureStaff("Mentor Two", MENTOR_TWO_USERNAME, "mentor2pass");
 
         Hackathon hackathonOne = ensureHackathon(
                 "HackHub Demo 1",
@@ -69,8 +75,8 @@ public class DataSeeder implements CommandLineRunner {
                 HackathonStatus.RUNNING
         );
 
-        assignCoreRoles(organizer, judge, mentor, hackathonOne);
-        assignCoreRoles(organizer, judge, mentor, hackathonTwo);
+        assignCoreRoles(organizerOne, judgeOne, mentorOne, hackathonOne);
+        assignCoreRoles(organizerTwo, judgeTwo, mentorTwo, hackathonTwo);
     }
 
     private StaffMember ensureStaff(String name, String username, String plainPassword) {

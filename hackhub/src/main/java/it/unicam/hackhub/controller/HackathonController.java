@@ -85,6 +85,33 @@ public class HackathonController {
         return result;
     }
 
+    public List<StaffSelectView> listSelectableStaffByRole(long currentStaffId, StaffRole role) {
+        if (currentStaffId <= 0) {
+            throw new IllegalArgumentException("Staff non valido");
+        }
+        if (role == null) {
+            throw new IllegalArgumentException("Ruolo non valido");
+        }
+        ensureCanCreateHackathon(currentStaffId);
+
+        List<StaffSelectView> result = new ArrayList<>();
+        for (StaffMember staffMember : staffMemberRepository.findAll()) {
+            long staffId = staffMember.getStaffId();
+            if (staffId == currentStaffId) {
+                continue;
+            }
+            if (!hasAnyAssignmentWithRole(staffId, role)) {
+                continue;
+            }
+            result.add(new StaffSelectView(
+                    staffId,
+                    safe(staffMember.getStaffUsername()),
+                    safe(staffMember.getStaffName())
+            ));
+        }
+        return result;
+    }
+
     public Hackathon createHackathon(long currentStaffId,
                                      String name,
                                      String regulation,
@@ -141,11 +168,17 @@ public class HackathonController {
         if (judgeStaffId == currentStaffId) {
             throw new IllegalArgumentException("Judge deve essere diverso dall'organizer");
         }
+        if (!hasAnyAssignmentWithRole(judgeStaffId, StaffRole.JUDGE)) {
+            throw new IllegalArgumentException("Judge non valido: staff non e un giudice");
+        }
 
         Set<Long> mentorIds = new LinkedHashSet<>();
         for (Long mentorId : mentorStaffIds) {
             if (mentorId == null || mentorId <= 0) {
                 throw new IllegalArgumentException("Mentor non valido");
+            }
+            if (!hasAnyAssignmentWithRole(mentorId, StaffRole.MENTOR)) {
+                throw new IllegalArgumentException("Mentor non valido: staff non e un mentor");
             }
             mentorIds.add(mentorId);
         }
@@ -368,6 +401,11 @@ public class HackathonController {
         if (anyOrganizerExists) {
             throw new IllegalArgumentException("Not authorized: only organizer can create hackathon");
         }
+    }
+
+    private boolean hasAnyAssignmentWithRole(long staffId, StaffRole role) {
+        return staffAssignmentRepository.findByStaffId(staffId).stream()
+                .anyMatch(assignment -> assignment.getRole() == role);
     }
 
     private String safe(String value) {
