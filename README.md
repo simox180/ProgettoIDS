@@ -33,7 +33,8 @@ Apri un terminale nella root del repo, poi:
 ### Windows (PowerShell)
 ```powershell
 cd .\hackhub
-.\mvnw.cmd spring-boot:run
+.\mvnw.cmd spring-boot:run 
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.arguments=--hackhub.cli.enabled=true"(avvio con CLI per test manuali veloci)
 ```
 
 ### Linux/macOS
