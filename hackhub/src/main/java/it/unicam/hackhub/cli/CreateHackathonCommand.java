@@ -31,6 +31,7 @@ public class CreateHackathonCommand implements Command {
     }
 
     @Override
+    // Guida l'organizer nella creazione hackathon con validazioni passo-passo.
     public void execute() {
         try {
             if (!sessionContext.isStaffLoggedIn()) {
@@ -58,6 +59,7 @@ public class CreateHackathonCommand implements Command {
             double prizeAmount = readNonNegativeDouble("Prize amount");
             int maxTeamSize = readPositiveInt("Max team size");
 
+            // Judge: lista filtrata solo sugli staff con ruolo judge.
             List<HackathonController.StaffSelectView> selectableJudges =
                     hackathonController.listSelectableStaffByRole(currentStaffId.get(), StaffRole.JUDGE);
             if (selectableJudges.isEmpty()) {
@@ -79,6 +81,7 @@ public class CreateHackathonCommand implements Command {
             TablePrinter.print(List.of("STAFF_ID", "USERNAME", "NAME"), judgeRows);
             long judgeStaffId = readJudgeId("Judge id", selectableJudgeIds);
 
+            // Mentor: stessa logica, escludendo il judge appena scelto.
             List<HackathonController.StaffSelectView> selectableMentors =
                     hackathonController.listSelectableStaffByRole(currentStaffId.get(), StaffRole.MENTOR);
             Set<Long> selectableMentorIds = new LinkedHashSet<>();
@@ -128,6 +131,7 @@ public class CreateHackathonCommand implements Command {
         }
     }
 
+    // Legge una data valida in formato yyyy-MM-dd.
     private LocalDate readDate(String prompt) {
         while (true) {
             String raw = inputHelper.readNonBlank(prompt).trim();
@@ -139,6 +143,7 @@ public class CreateHackathonCommand implements Command {
         }
     }
 
+    // Chiede end date finche' non e' successiva alla start date.
     private LocalDate readEndDateAfterStart(LocalDate startDate) {
         while (true) {
             LocalDate endDate = readDate("End date (yyyy-MM-dd)");
@@ -150,6 +155,7 @@ public class CreateHackathonCommand implements Command {
         }
     }
 
+    // Chiede registration deadline finche' non e' prima della start date.
     private LocalDate readRegistrationDeadlineBeforeStart(LocalDate startDate) {
         while (true) {
             LocalDate registrationDeadline = readDate("Registration deadline (yyyy-MM-dd)");
@@ -161,6 +167,7 @@ public class CreateHackathonCommand implements Command {
         }
     }
 
+    // Chiede submission deadline dentro la finestra start/end.
     private LocalDate readSubmissionDeadlineInWindow(LocalDate startDate, LocalDate endDate) {
         while (true) {
             LocalDate submissionDeadline = readDate("Submission deadline (yyyy-MM-dd)");
@@ -172,6 +179,7 @@ public class CreateHackathonCommand implements Command {
         }
     }
 
+    // Legge un valore numerico non negativo.
     private double readNonNegativeDouble(String prompt) {
         while (true) {
             String raw = inputHelper.readNonBlank(prompt).trim();
@@ -188,6 +196,7 @@ public class CreateHackathonCommand implements Command {
         }
     }
 
+    // Legge un intero positivo per la dimensione massima team.
     private int readPositiveInt(String prompt) {
         while (true) {
             long raw = inputHelper.readLong(prompt);
@@ -199,6 +208,7 @@ public class CreateHackathonCommand implements Command {
         }
     }
 
+    // Accetta solo id presenti nella lista judge stampata.
     private long readJudgeId(String prompt, Set<Long> allowedIds) {
         while (true) {
             long staffId = inputHelper.readLong(prompt);
@@ -209,6 +219,7 @@ public class CreateHackathonCommand implements Command {
         }
     }
 
+    // Parsea e valida una lista di id mentor separati da virgola.
     private List<Long> readStaffIdsCsv(String prompt, Set<Long> allowedIds) {
         while (true) {
             String raw = inputHelper.readNonBlank(prompt).trim();

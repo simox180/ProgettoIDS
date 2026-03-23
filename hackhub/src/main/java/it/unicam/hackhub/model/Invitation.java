@@ -18,11 +18,13 @@ public class Invitation {
     private long teamId;
     private long invitedUserId;
     @Enumerated(EnumType.STRING)
+    // PENDING/ACCEPTED/DECLINED guida i flussi di gestione invito.
     private InvitationStatus status;
 
     public Invitation() {
     }
 
+    // Crea l'invito inizialmente in stato pendente.
     public Invitation(long invitationId, long teamId, long invitedUserId, InvitationStatus status) {
         this.invitationId = invitationId;
         this.teamId = teamId;

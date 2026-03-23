@@ -41,6 +41,7 @@ public class SpringCliBootstrap {
         );
     }
 
+    // Avvia menu CLI usando gli stessi bean Spring dell'app.
     public void runCli() {
         appContext.init();
         Scanner scanner = new Scanner(System.in);

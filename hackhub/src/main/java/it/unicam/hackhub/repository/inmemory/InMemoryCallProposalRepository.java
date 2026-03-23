@@ -24,7 +24,6 @@ public class InMemoryCallProposalRepository implements CallProposalRepository {
 
     @Override
     public List<CallProposal> findBySupportRequestId(long supportRequestId) {
-        // TODO: ricerca lineare accettabile ora; se aumentano le proposte valutiamo indice per requestId.
         List<CallProposal> result = new ArrayList<>();
         for (CallProposal proposal : storage.values()) {
             if (proposal.getRequestId() == supportRequestId) {

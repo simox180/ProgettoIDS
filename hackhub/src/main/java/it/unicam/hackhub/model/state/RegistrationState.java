@@ -30,6 +30,7 @@ public class RegistrationState implements HackathonState {
 
     @Override
     public HackathonStatus nextStatus(HackathonStatus target) {
+        // Da REGISTRATION si passa solo a RUNNING.
         if (target == HackathonStatus.RUNNING) {
             return target;
         }

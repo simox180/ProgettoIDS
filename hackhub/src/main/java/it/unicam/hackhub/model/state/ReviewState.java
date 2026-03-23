@@ -30,6 +30,7 @@ public class ReviewState implements HackathonState {
 
     @Override
     public HackathonStatus nextStatus(HackathonStatus target) {
+        // Da REVIEW si puo' solo chiudere.
         if (target == HackathonStatus.CLOSED) {
             return target;
         }

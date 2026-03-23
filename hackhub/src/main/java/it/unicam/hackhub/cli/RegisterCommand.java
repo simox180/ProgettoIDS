@@ -31,7 +31,6 @@ public class RegisterCommand implements Command {
 
             long userId = authController.registerUser(userName, password);
             System.out.println("Registrazione completata. userId=" + userId);
-            // Keep explicit control to login command; registration does not auto-login.
         } catch (OperationCancelledException ex) {
             System.out.println("Operazione annullata.");
         } catch (IllegalArgumentException ex) {

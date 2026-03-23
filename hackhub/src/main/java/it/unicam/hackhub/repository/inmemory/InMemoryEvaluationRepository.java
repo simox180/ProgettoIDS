@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class InMemoryEvaluationRepository implements EvaluationRepository {
     private final Map<Long, Evaluation> byId = new HashMap<>();
-    // Indice secondario necessario per enforce "una evaluation per submission".
     private final Map<Long, Long> submissionToEvaluationId = new HashMap<>();
     private final AtomicLong idGenerator = new AtomicLong(0);
 

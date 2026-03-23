@@ -31,6 +31,7 @@ public class TeamRegistrationController {
         this.teamRegistrationRepository = teamRegistrationRepository;
     }
 
+    // Mostra gli hackathon a cui il team dell'utente puo' ancora iscriversi.
     public List<HackathonRegistrationOption> listRegisterableHackathons(long currentUserId) {
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new IllegalArgumentException("Utente non trovato"));
@@ -53,6 +54,7 @@ public class TeamRegistrationController {
                 .toList();
     }
 
+    // Registra il team all'hackathon dopo i controlli principali.
     public TeamRegistration registerTeamToHackathon(long currentUserId, long hackathonId) {
         LocalDateTime now = LocalDateTime.now();
 
@@ -68,6 +70,7 @@ public class TeamRegistrationController {
 
         Hackathon hackathon = hackathonRepository.findById(hackathonId)
                 .orElseThrow(() -> new IllegalArgumentException("Hackathon not found"));
+        // Prima controllo stato e deadline, poi verifico che il team sia registrabile.
         if (!hackathon.canRegister()) {
             throw new IllegalArgumentException("Hackathon is not open for registration");
         }
@@ -75,11 +78,13 @@ public class TeamRegistrationController {
             throw new IllegalStateException("Scadenza iscrizione superata.");
         }
 
+        // Un team puo' risultare registrato a un solo hackathon.
         if (teamRegistrationRepository.findByTeamId(team.getTeamId()).isPresent()) {
             throw new IllegalArgumentException("Team is already registered to a hackathon");
         }
 
         int currentMembers = userRepository.findByTeamId(teamId).size();
+        // Se supera il limite, blocchiamo la registrazione.
         if (currentMembers > hackathon.getMaxTeamSize()) {
             throw new IllegalStateException("Team troppo numeroso: supera la dimensione massima dell'hackathon.");
         }
@@ -94,6 +99,7 @@ public class TeamRegistrationController {
         return teamRegistrationRepository.save(registration);
     }
 
+    // Restituisce la registrazione del team dell'utente, se esiste.
     public Optional<TeamRegistration> getMyRegistration(long currentUserId) {
         User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new IllegalArgumentException("Current user not found"));

@@ -47,7 +47,6 @@ public class InMemoryInvitationRepository implements InvitationRepository {
             invitation.setInvitationId(idGenerator.incrementAndGet());
         }
 
-        // Keep primary storage index coherent on both insert and update.
         storage.put(invitation.getInvitationId(), invitation);
         return invitation;
     }

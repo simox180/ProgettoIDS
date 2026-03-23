@@ -23,6 +23,7 @@ public class User {
     public User() {
     }
 
+    // teamId puo' restare null finche' l'utente non entra in un team.
     public User(long userId, String userName, String passwordHash, Long teamId) {
         if (userId < 0) {
             throw new IllegalArgumentException("User id non valido");

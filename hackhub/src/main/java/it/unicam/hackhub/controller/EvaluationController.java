@@ -38,6 +38,7 @@ public class EvaluationController {
         this.teamRegistrationRepository = teamRegistrationRepository;
     }
 
+    // Recupera la valutazione della submission se lo staff e' assegnato all'hackathon.
     public Optional<EvaluationView> viewEvaluation(long currentStaffId, long submissionId) {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("Submission non trovata."));
@@ -60,6 +61,7 @@ public class EvaluationController {
                 ));
     }
 
+    // Controlla che la submission possa essere valutata dal judge corrente.
     public void assertEvaluatable(long currentStaffId, long submissionId) {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("Submission non trovata"));
@@ -68,6 +70,7 @@ public class EvaluationController {
                 .orElseThrow(() -> new IllegalStateException("Team registration not found"));
         long hackathonId = registration.getHackathonId();
 
+        // Solo i judge assegnati possono valutare.
         boolean isJudge = staffAssignmentRepository.findByHackathonIdAndRole(hackathonId, StaffRole.JUDGE)
                 .stream()
                 .anyMatch(assignment -> assignment.getStaffId() == currentStaffId);
@@ -77,14 +80,17 @@ public class EvaluationController {
 
         Hackathon hackathon = hackathonRepository.findById(hackathonId)
                 .orElseThrow(() -> new IllegalArgumentException("Hackathon not found"));
+        // La valutazione e' ammessa solo nella fase REVIEW.
         if (!hackathon.canEvaluate()) {
             throw new IllegalStateException("Hackathon not in REVIEW");
         }
+        // Da qui in poi il team non puo' piu' essere valutato se espulso.
         if (registration.isExpelled()) {
             throw new IllegalStateException("Cannot evaluate expelled team submission");
         }
     }
 
+    // Verifica rapida usata quando il client ha gia' hackathon e judge.
     public void assertHackathonInReviewForJudge(long currentStaffId, long hackathonId) {
         boolean isJudge = staffAssignmentRepository.findByHackathonIdAndRole(hackathonId, StaffRole.JUDGE)
                 .stream()
@@ -100,6 +106,7 @@ public class EvaluationController {
         }
     }
 
+    // Salva il voto: aggiorna quello esistente oppure ne crea uno nuovo.
     public Evaluation evaluateSubmission(long currentStaffId, long submissionId, int score, String comment) {
         if (score < 0 || score > 10) {
             throw new IllegalArgumentException("Score must be between 0 and 10");
@@ -111,6 +118,7 @@ public class EvaluationController {
                 .orElseThrow(() -> new IllegalArgumentException("Submission non trovata"));
 
         LocalDateTime now = LocalDateTime.now();
+        // Aggiorno la valutazione esistente, altrimenti ne creo una nuova.
         Evaluation evaluation = evaluationRepository.findBySubmissionId(submissionId)
                 .map(existing -> {
                     existing.setScore(score);
@@ -129,6 +137,7 @@ public class EvaluationController {
         return evaluationRepository.save(evaluation);
     }
 
+    // Recupera la valutazione legata alla submission, se presente.
     public Optional<Evaluation> findBySubmissionId(long submissionId) {
         return evaluationRepository.findBySubmissionId(submissionId);
     }

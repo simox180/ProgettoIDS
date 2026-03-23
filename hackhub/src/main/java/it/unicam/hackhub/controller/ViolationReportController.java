@@ -39,6 +39,7 @@ public class ViolationReportController {
         this.violationReportRepository = violationReportRepository;
     }
 
+    // Restituisce gli hackathon in cui lo staff e' mentor.
     public List<MentorHackathonOption> listMentorHackathons(long currentStaffId) {
         Set<Long> hackathonIds = new LinkedHashSet<>();
         for (StaffAssignment assignment : staffAssignmentRepository.findByStaffId(currentStaffId)) {
@@ -58,6 +59,7 @@ public class ViolationReportController {
                 .toList();
     }
 
+    // Elenca i team segnalabili in un hackathon dove il mentor e' assegnato.
     public List<ReportTeamOption> listReportableTeams(long currentStaffId, long hackathonId) {
         boolean mentorAssigned = false;
         for (StaffAssignment assignment : staffAssignmentRepository.findByHackathonId(hackathonId)) {
@@ -83,6 +85,7 @@ public class ViolationReportController {
                 .toList();
     }
 
+    // Restituisce gli hackathon in cui lo staff ha ruolo organizer.
     public List<OrganizerHackathonOption> listOrganizerHackathons(long currentStaffId) {
         return staffAssignmentRepository.findByStaffId(currentStaffId).stream()
                 .filter(assignment -> assignment.getRole() == StaffRole.ORGANIZER)
@@ -98,6 +101,7 @@ public class ViolationReportController {
                 .toList();
     }
 
+    // Elenca le segnalazioni, con filtro opzionale sulle sole pendenti.
     public List<ViolationReport> listReports(long currentStaffId, long hackathonId, boolean onlyPending) {
         boolean organizerAssigned = false;
         for (StaffAssignment assignment : staffAssignmentRepository.findByHackathonId(hackathonId)) {
@@ -116,9 +120,11 @@ public class ViolationReportController {
         return violationReportRepository.findByHackathonId(hackathonId);
     }
 
+    // Crea una segnalazione disciplinare per un team registrato.
     public ViolationReport createReport(long currentStaffId, long hackathonId, long teamId, String description) {
         Hackathon hackathon = hackathonRepository.findById(hackathonId)
                 .orElseThrow(() -> new IllegalArgumentException("Hackathon non trovato"));
+        // Le segnalazioni hanno senso solo mentre la gara e' in corso.
         if (hackathon.getStatus() != HackathonStatus.RUNNING) {
             throw new IllegalStateException("Segnalazioni consentite solo in stato RUNNING");
         }
@@ -150,6 +156,7 @@ public class ViolationReportController {
         return violationReportRepository.save(report);
     }
 
+    // Applica la decisione organizer: rifiuto o espulsione.
     public ViolationReport manageReport(long currentStaffId, long reportId, String action) {
         ViolationReport report = violationReportRepository.findById(reportId)
                 .orElseThrow(() -> new IllegalArgumentException("Report not found"));
@@ -169,6 +176,7 @@ public class ViolationReportController {
             throw new IllegalStateException("Report already managed");
         }
 
+        // REJECT chiude il report senza toccare la registrazione.
         if ("REJECT".equalsIgnoreCase(action)) {
             report.setDecision("REJECTED");
             return violationReportRepository.save(report);
@@ -178,6 +186,7 @@ public class ViolationReportController {
             TeamRegistration registration = teamRegistrationRepository
                     .findByTeamIdAndHackathonId(report.getTeamId(), report.getHackathonId())
                     .orElseThrow(() -> new IllegalArgumentException("Team not registered to this hackathon"));
+            // L'espulsione aggiorna sia la registrazione sia il report.
             registration.setExpelled(true);
             teamRegistrationRepository.save(registration);
 

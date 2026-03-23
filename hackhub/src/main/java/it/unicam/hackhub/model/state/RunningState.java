@@ -30,6 +30,7 @@ public class RunningState implements HackathonState {
 
     @Override
     public HackathonStatus nextStatus(HackathonStatus target) {
+        // Da RUNNING si passa solo a REVIEW.
         if (target == HackathonStatus.REVIEW) {
             return target;
         }

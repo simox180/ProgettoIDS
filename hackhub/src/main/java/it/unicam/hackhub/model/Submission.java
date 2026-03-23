@@ -13,6 +13,7 @@ import java.util.Objects;
 @Entity
 @Table(
         name = "submissions",
+        // Una sola submission per ogni registrazione team.
         uniqueConstraints = @UniqueConstraint(columnNames = {"registrationId"})
 )
 public class Submission {
@@ -27,6 +28,7 @@ public class Submission {
     public Submission() {
     }
 
+    // submittedAt e lastUpdatedAt partono uguali al primo invio.
     public Submission(long submissionId, long registrationId, String content, LocalDateTime submittedAt, LocalDateTime lastUpdatedAt) {
         this.submissionId = submissionId;
         this.registrationId = registrationId;

@@ -13,6 +13,7 @@ import java.util.Objects;
 @Entity
 @Table(
         name = "evaluations",
+        // Una submission mantiene una sola valutazione corrente.
         uniqueConstraints = @UniqueConstraint(columnNames = {"submissionId"})
 )
 public class Evaluation {
@@ -27,6 +28,7 @@ public class Evaluation {
     public Evaluation() {
     }
 
+    // Rappresenta il voto finale del judge su quella submission.
     public Evaluation(long evaluationId, long submissionId, int score, String comment, LocalDateTime evaluatedAt) {
         this.evaluationId = evaluationId;
         this.submissionId = submissionId;

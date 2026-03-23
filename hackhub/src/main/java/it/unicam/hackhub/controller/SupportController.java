@@ -49,11 +49,13 @@ public class SupportController {
         this.calendarSystem = calendarSystem;
     }
 
+    // Crea una richiesta supporto usando il contesto team/hackathon dell'utente.
     public SupportRequest createSupportRequestForCurrentUser(long currentUserId, String message) {
         UserHackathonContext context = resolveUserHackathonContext(currentUserId);
         return createSupportRequest(currentUserId, context.hackathonId(), message);
     }
 
+    // Elenca le proposte call ancora libere per il team corrente.
     public List<CallProposalSummary> listAvailableCallProposalsForCurrentUser(long currentUserId) {
         UserHackathonContext context = resolveUserHackathonContext(currentUserId);
         List<CallProposalSummary> summaries = new ArrayList<>();
@@ -80,6 +82,7 @@ public class SupportController {
         return summaries;
     }
 
+    // Restituisce gli hackathon assegnati al mentor corrente.
     public List<MentorHackathonView> listMentorAssignedHackathons(long currentStaffId) {
         return staffAssignmentRepository.findByStaffId(currentStaffId).stream()
                 .filter(assignment -> assignment.getRole() == StaffRole.MENTOR)
@@ -98,6 +101,7 @@ public class SupportController {
                 .toList();
     }
 
+    // Elenca le richieste supporto visibili al mentor in quell'hackathon.
     public List<SupportRequestView> listSupportRequestsForMentor(long currentStaffId, long hackathonId) {
         boolean isMentorAssigned = staffAssignmentRepository.findByHackathonId(hackathonId).stream()
                 .anyMatch(assignment -> assignment.getRole() == StaffRole.MENTOR
@@ -117,6 +121,7 @@ public class SupportController {
                 .toList();
     }
 
+    // Crea una richiesta supporto solo per team attivi e in RUNNING.
     public SupportRequest createSupportRequest(long currentUserId, long hackathonId, String message) {
         User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new IllegalArgumentException("Utente non trovato"));
@@ -131,12 +136,14 @@ public class SupportController {
         TeamRegistration registration = teamRegistrationRepository
                 .findByTeamIdAndHackathonId(teamId, hackathonId)
                 .orElseThrow(() -> new IllegalArgumentException("Team non registrato a questo hackathon"));
+        // Team espulso: niente nuove richieste.
         if (registration.isExpelled()) {
             throw new IllegalStateException("Team expelled");
         }
 
         Hackathon hackathon = hackathonRepository.findById(hackathonId)
                 .orElseThrow(() -> new IllegalArgumentException("Hackathon non trovato"));
+        // Le richieste supporto sono aperte solo durante RUNNING.
         if (hackathon.getStatus() != HackathonStatus.RUNNING) {
             throw new IllegalStateException("Richieste supporto consentite solo in stato RUNNING");
         }
@@ -151,6 +158,7 @@ public class SupportController {
         return supportRequestRepository.save(supportRequest);
     }
 
+    // Il mentor propone una finestra call su una richiesta specifica.
     public CallProposal createCallProposal(long currentStaffId,
                                            long supportRequestId,
                                            LocalDateTime proposedStart,
@@ -163,6 +171,7 @@ public class SupportController {
                 .orElseThrow(() -> new IllegalArgumentException("Support request non trovata"));
         long hackathonId = supportRequest.getHackathonId();
 
+        // Solo mentor assegnati a quell'hackathon possono proporre slot.
         boolean isMentorAssigned = false;
         for (StaffAssignment assignment : staffAssignmentRepository.findByHackathonId(hackathonId)) {
             if (assignment.getRole() == StaffRole.MENTOR && assignment.getStaffId() == currentStaffId) {
@@ -185,10 +194,12 @@ public class SupportController {
         return callProposalRepository.save(proposal);
     }
 
+    // Restituisce tutte le proposte legate a una richiesta supporto.
     public List<CallProposal> listCallProposals(long supportRequestId) {
         return callProposalRepository.findBySupportRequestId(supportRequestId);
     }
 
+    // Prenota una proposta call valida per il team dell'utente.
     public CallBooking bookCall(long currentUserId, long proposalId) {
         CallProposal proposal = callProposalRepository.findById(proposalId)
                 .orElseThrow(() -> new IllegalArgumentException("Call proposal non trovata"));
@@ -212,10 +223,12 @@ public class SupportController {
         TeamRegistration registration = teamRegistrationRepository
                 .findByTeamIdAndHackathonId(teamId, supportRequest.getHackathonId())
                 .orElseThrow(() -> new IllegalArgumentException("Team non registrato a questo hackathon"));
+        // Team espulso: niente prenotazioni.
         if (registration.isExpelled()) {
             throw new IllegalStateException("Team expelled");
         }
 
+        // Se il calendario non genera il link, fermiamo tutto qui.
         String meetingLink = calendarSystem.createMeetingLink(
                 proposal.getProposedStart(),
                 proposal.getProposedEnd()
@@ -233,12 +246,14 @@ public class SupportController {
         );
         CallBooking savedBooking = callProposalRepository.saveBooking(booking);
 
+        // Segno la proposta occupata solo dopo aver salvato la prenotazione.
         proposal.setBooked(true);
         callProposalRepository.save(proposal);
 
         return savedBooking;
     }
 
+    // Risolve una volta sola il contesto team/hackathon dell'utente.
     private UserHackathonContext resolveUserHackathonContext(long currentUserId) {
         User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new IllegalArgumentException("Utente non trovato"));

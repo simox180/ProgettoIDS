@@ -30,6 +30,7 @@ public class ClosedState implements HackathonState {
 
     @Override
     public HackathonStatus nextStatus(HackathonStatus target) {
+        // CLOSED e' terminale: nessuna transizione successiva.
         throw new IllegalStateException("Invalid transition: CLOSED -> " + target);
     }
 }

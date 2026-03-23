@@ -20,6 +20,7 @@ public class HackathonWebController {
         this.hackathonController = hackathonController;
     }
 
+    // Restituisce la lista hackathon per il client web.
     @GetMapping
     public List<HackathonDto> listHackathons() {
         return hackathonController.listHackathons().stream()
@@ -27,6 +28,7 @@ public class HackathonWebController {
                 .toList();
     }
 
+    // Restituisce il dettaglio di un hackathon specifico.
     @GetMapping("/{id}")
     public HackathonDto getHackathon(@PathVariable long id) {
         return hackathonController.getHackathonDetails(id)

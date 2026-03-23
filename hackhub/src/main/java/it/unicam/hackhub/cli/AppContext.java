@@ -53,10 +53,11 @@ public class AppContext {
         this.sessionContext = new SessionContext();
     }
 
+    // Hook lasciato per eventuale inizializzazione CLI.
     public void init() {
-        // Spring gestisce il lifecycle e i dati del dominio. Nessun seed locale in CLI.
     }
 
+    // Costruisce e registra tutti i comandi disponibili in CLI.
     public CommandRegistry createCommandRegistry(Scanner scanner) {
         CommandRegistry registry = new CommandRegistry();
         InputHelper inputHelper = new InputHelper(scanner);
@@ -70,6 +71,7 @@ public class AppContext {
         );
         LogoutCommand logoutCommand = new LogoutCommand(sessionContext);
 
+        // Definisce i gruppi di accesso usati dai comandi.
         EnumSet<CommandRegistry.Audience> guestOnly = EnumSet.of(CommandRegistry.Audience.GUEST);
         EnumSet<CommandRegistry.Audience> userOnly = EnumSet.of(CommandRegistry.Audience.USER);
         EnumSet<CommandRegistry.Audience> staffOnly = EnumSet.of(CommandRegistry.Audience.STAFF);

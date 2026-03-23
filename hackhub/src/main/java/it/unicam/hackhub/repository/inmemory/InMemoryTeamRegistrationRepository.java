@@ -31,7 +31,6 @@ public class InMemoryTeamRegistrationRepository implements TeamRegistrationRepos
 
     @Override
     public Optional<TeamRegistration> findByTeamIdAndHackathonId(long teamId, long hackathonId) {
-        // TODO: qui assumiamo 1 team -> 1 hackathon; se cambia il dominio serve indice per coppia.
         Optional<TeamRegistration> registrationOpt = findByTeamId(teamId);
         if (registrationOpt.isEmpty()) {
             return Optional.empty();

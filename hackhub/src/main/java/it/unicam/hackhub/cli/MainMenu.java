@@ -15,6 +15,7 @@ public class MainMenu {
         this.sessionContext = sessionContext;
     }
 
+    // Loop principale della CLI: help, dispatch comandi e gestione errori utente.
     public void run() {
         System.out.println("HackHub CLI avviata. Digita 'help' per i comandi, 'exit' per uscire.");
         while (true) {
@@ -54,6 +55,7 @@ public class MainMenu {
         }
     }
 
+    // Cambia prompt in base al profilo attualmente autenticato.
     private String prompt() {
         if (sessionContext.isUserLoggedIn()) {
             return "hackhub(user)> ";

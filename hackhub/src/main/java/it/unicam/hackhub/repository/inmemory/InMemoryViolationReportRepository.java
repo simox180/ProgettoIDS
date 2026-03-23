@@ -11,7 +11,6 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class InMemoryViolationReportRepository implements ViolationReportRepository {
-    // TreeMap per ordinamento naturale per reportId nelle liste
     private final Map<Long, ViolationReport> byId = new TreeMap<>();
     private final AtomicLong idGenerator = new AtomicLong(0);
 

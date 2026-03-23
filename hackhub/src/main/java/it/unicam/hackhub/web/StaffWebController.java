@@ -69,6 +69,7 @@ public class StaffWebController {
         this.sessionStore = sessionStore;
     }
 
+    // Elenca gli hackathon assegnati allo staff loggato.
     @GetMapping("/me/hackathons")
     public List<SubmissionAccessController.AssignedHackathonView> listAssignedHackathons(
             @RequestHeader(value = SESSION_TOKEN_HEADER, required = false) String token) {
@@ -76,6 +77,7 @@ public class StaffWebController {
         return submissionAccessController.listAssignedHackathons(staffId);
     }
 
+    // Restituisce la lista anagrafica dello staff.
     @GetMapping("/members")
     public List<StaffMemberDto> listStaffMembers(
             @RequestHeader(value = SESSION_TOKEN_HEADER, required = false) String token) {
@@ -86,6 +88,7 @@ public class StaffWebController {
                 .toList();
     }
 
+    // Elenca le submission di un hackathon se lo staff e' autorizzato.
     @GetMapping("/hackathons/{hackathonId}/submissions")
     public List<SubmissionAccessController.SubmissionView> listSubmissions(
             @PathVariable long hackathonId,
@@ -94,6 +97,7 @@ public class StaffWebController {
         return submissionAccessController.listSubmissionViewsForHackathon(staffId, hackathonId);
     }
 
+    // Restituisce il dettaglio di una submission nello stesso hackathon.
     @GetMapping("/hackathons/{hackathonId}/submissions/{submissionId}")
     public SubmissionAccessController.SubmissionDetailView getSubmissionDetail(
             @PathVariable long hackathonId,
@@ -104,6 +108,7 @@ public class StaffWebController {
                 .orElseThrow(() -> new IllegalArgumentException("Submission not found"));
     }
 
+    // Registra o aggiorna la valutazione di una submission.
     @PostMapping("/hackathons/{hackathonId}/submissions/{submissionId}/evaluation")
     public EvaluationResponse evaluateSubmission(
             @PathVariable long hackathonId,
@@ -113,6 +118,7 @@ public class StaffWebController {
         long staffId = SessionAuth.requireStaffId(sessionStore, token);
         ValidateInput validateInput = validateInput(request);
 
+        // Prima autorizzazione judge+stato, poi controllo che la submission sia dell'hackathon.
         evaluationController.assertHackathonInReviewForJudge(staffId, hackathonId);
         ensureSubmissionBelongsToHackathon(staffId, hackathonId, submissionId);
 
@@ -124,6 +130,7 @@ public class StaffWebController {
         ));
     }
 
+    // Recupera la valutazione corrente di una submission.
     @GetMapping("/hackathons/{hackathonId}/submissions/{submissionId}/evaluation")
     public ResponseEntity<EvaluationResponse> getEvaluation(
             @PathVariable long hackathonId,
@@ -138,6 +145,7 @@ public class StaffWebController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    // Crea un hackathon nuovo come organizer.
     @PostMapping("/organizer/hackathons")
     public ResponseEntity<Map<String, Long>> createHackathon(
             @RequestBody CreateHackathonRequest request,
@@ -147,6 +155,7 @@ public class StaffWebController {
         if (request == null || request.name() == null || request.name().isBlank()) {
             throw new IllegalArgumentException("Nome hackathon non valido");
         }
+        // Controlli rapidi sul payload prima di passare al dominio.
         if (request.judgeId() <= 0) {
             throw new IllegalArgumentException("Judge non valido");
         }
@@ -178,6 +187,7 @@ public class StaffWebController {
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("hackathonId", created.getHackathonId()));
     }
 
+    // Avanza lo stato dell'hackathon.
     @PostMapping("/organizer/hackathons/{hackathonId}/advance")
     public Map<String, String> advanceHackathon(
             @PathVariable long hackathonId,
@@ -187,6 +197,7 @@ public class StaffWebController {
         return Map.of("status", "ok");
     }
 
+    // Aggiunge mentor all'hackathon.
     @PostMapping("/organizer/hackathons/{hackathonId}/mentors")
     public Map<String, String> addMentors(
             @PathVariable long hackathonId,
@@ -205,6 +216,7 @@ public class StaffWebController {
         return Map.of("status", "ok");
     }
 
+    // Imposta il winner dell'hackathon.
     @PostMapping("/organizer/hackathons/{hackathonId}/winner")
     public Map<String, String> setWinner(
             @PathVariable long hackathonId,
@@ -219,6 +231,7 @@ public class StaffWebController {
         return Map.of("status", "ok");
     }
 
+    // Tenta il pagamento del premio al winner.
     @PostMapping("/organizer/hackathons/{hackathonId}/pay-prize")
     public Map<String, String> payPrize(
             @PathVariable long hackathonId,
@@ -229,6 +242,7 @@ public class StaffWebController {
         Map<String, String> response = new LinkedHashMap<>();
         response.put("result", result);
 
+        // Espone receipt/error solo se presenti.
         String receiptId = paymentSystem.getLastReceiptId();
         if (receiptId != null && !receiptId.isBlank()) {
             response.put("receiptId", receiptId);
@@ -241,6 +255,7 @@ public class StaffWebController {
         return response;
     }
 
+    // Elenca gli hackathon in cui lo staff e' mentor.
     @GetMapping("/mentor/hackathons")
     public List<SupportController.MentorHackathonView> listMentorHackathons(
             @RequestHeader(value = SESSION_TOKEN_HEADER, required = false) String token) {
@@ -248,6 +263,7 @@ public class StaffWebController {
         return supportController.listMentorAssignedHackathons(staffId);
     }
 
+    // Elenca le richieste supporto visibili al mentor.
     @GetMapping("/mentor/hackathons/{hackathonId}/support-requests")
     public List<SupportController.SupportRequestView> listSupportRequests(
             @PathVariable long hackathonId,
@@ -256,6 +272,7 @@ public class StaffWebController {
         return supportController.listSupportRequestsForMentor(staffId, hackathonId);
     }
 
+    // Crea una proposta call per una richiesta supporto.
     @PostMapping("/mentor/support-requests/{requestId}/call-proposals")
     public ResponseEntity<CallProposalDto> createCallProposal(
             @PathVariable long requestId,
@@ -281,6 +298,7 @@ public class StaffWebController {
         return ResponseEntity.status(HttpStatus.CREATED).body(CallProposalDto.from(proposal));
     }
 
+    // Apre una segnalazione disciplinare come mentor.
     @PostMapping("/mentor/violation-reports")
     public ResponseEntity<Map<String, Long>> createViolationReport(
             @RequestBody CreateViolationReportRequest request,
@@ -303,6 +321,7 @@ public class StaffWebController {
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("reportId", report.getReportId()));
     }
 
+    // Mostra le segnalazioni ancora pendenti.
     @GetMapping("/organizer/hackathons/{hackathonId}/violation-reports/pending")
     public List<ViolationReportDto> listPendingReports(
             @PathVariable long hackathonId,
@@ -313,6 +332,7 @@ public class StaffWebController {
                 .toList();
     }
 
+    // Applica la decisione organizer sul report.
     @PostMapping("/organizer/violation-reports/{reportId}/decision")
     public Map<String, String> manageReport(
             @PathVariable long reportId,
@@ -324,11 +344,13 @@ public class StaffWebController {
         return Map.of("status", "ok");
     }
 
+    // Controlla che la submission appartenga davvero all'hackathon richiesto.
     private void ensureSubmissionBelongsToHackathon(long staffId, long hackathonId, long submissionId) {
         submissionAccessController.getSubmissionDetailForHackathon(staffId, hackathonId, submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("Submission not found in this hackathon"));
     }
 
+    // Valida score/comment prima di passare al controller dominio.
     private ValidateInput validateInput(EvaluateRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Dati valutazione non validi");
@@ -347,6 +369,7 @@ public class StaffWebController {
         return dateTime == null ? null : dateTime.toLocalDate();
     }
 
+    // Accetta solo decisioni REJECT o EXPEL.
     private String normalizeDecision(String decision) {
         if (decision == null || decision.isBlank()) {
             throw new IllegalArgumentException("Decision non valida");

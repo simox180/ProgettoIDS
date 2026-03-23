@@ -21,6 +21,7 @@ public class Team {
     public Team() {
     }
 
+    // Valida subito id e nome per evitare team inconsistenti.
     public Team(long teamId, String teamName) {
         if (teamId < 0) {
             throw new IllegalArgumentException("Team id non valido");

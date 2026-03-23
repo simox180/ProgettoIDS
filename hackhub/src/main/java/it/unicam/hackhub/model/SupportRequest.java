@@ -22,6 +22,7 @@ public class SupportRequest {
     public SupportRequest() {
     }
 
+    // Valida i riferimenti e normalizza il testo della richiesta.
     public SupportRequest(long requestId, long teamId, long hackathonId, String message, LocalDateTime createdAt) {
         if (requestId < 0) {
             throw new IllegalArgumentException("Request id non valido");

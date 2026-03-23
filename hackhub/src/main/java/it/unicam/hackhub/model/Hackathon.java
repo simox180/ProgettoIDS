@@ -105,8 +105,10 @@ public class Hackathon {
         this.winnerTeamId = winnerTeamId;
     }
     public boolean isPrizePaid() { return prizePaid; }
+    // Marca il premio come gia' pagato.
     public void markPrizePaid() { this.prizePaid = true; }
 
+    // Traduce lo status corrente nello stato concreto della macchina a stati.
     public HackathonState getState() {
         if (status == null) {
             throw new IllegalStateException("Hackathon status is not set");
@@ -119,14 +121,17 @@ public class Hackathon {
         };
     }
 
+    // Verifica se siamo nella fase in cui sono aperte le registrazioni.
     public boolean canRegister() {
         return getState().canRegister();
     }
 
+    // Verifica se siamo nella fase in cui sono ammessi invii.
     public boolean canSubmit() {
         return getState().canSubmit();
     }
 
+    // Verifica se siamo nella fase in cui i judge possono valutare.
     public boolean canEvaluate() {
         return getState().canEvaluate();
     }
@@ -136,6 +141,7 @@ public class Hackathon {
     }
 
     public void changeStatus(HackathonStatus target) {
+        // La transizione passa sempre dallo stato corrente.
         this.status = getState().nextStatus(target);
     }
 
@@ -229,6 +235,7 @@ public class Hackathon {
             return this;
         }
 
+        // Controlla le regole principali prima di costruire l'entity.
         public Hackathon build() {
             if (hackathonName == null || hackathonName.isBlank()) {
                 throw new IllegalArgumentException("Hackathon name is required");
@@ -257,6 +264,8 @@ public class Hackathon {
             if (submissionDeadline != null && submissionDeadline.isAfter(endDate)) {
                 throw new IllegalArgumentException("Invalid submission deadline");
             }
+
+            // Il nome viene salvato pulito per evitare differenze solo di spazi.
             Hackathon hackathon = new Hackathon(
                     hackathonId,
                     hackathonName.trim(),

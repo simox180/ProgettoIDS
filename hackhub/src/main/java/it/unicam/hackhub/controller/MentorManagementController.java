@@ -27,10 +27,12 @@ public class MentorManagementController {
         this.staffAssignmentRepository = staffAssignmentRepository;
     }
 
+    // Aggiunge un mentor a un hackathon, solo se richiesto da un organizer assegnato.
     public void addMentor(long currentStaffId, long hackathonId, long mentorStaffId) {
         hackathonRepository.findById(hackathonId)
                 .orElseThrow(() -> new IllegalArgumentException("Hackathon non trovato"));
 
+        // Solo organizer di quell'hackathon puo' aggiungere mentor.
         boolean isOrganizer = staffAssignmentRepository.findByHackathonIdAndRole(hackathonId, StaffRole.ORGANIZER)
                 .stream()
                 .anyMatch(assignment -> assignment.getStaffId() == currentStaffId);
@@ -44,6 +46,7 @@ public class MentorManagementController {
         staffMemberRepository.findById(mentorStaffId)
                 .orElseThrow(() -> new IllegalArgumentException("Staff non trovato: " + mentorStaffId));
 
+        // Evita assegnazioni mentor duplicate nello stesso hackathon.
         boolean alreadyMentor = staffAssignmentRepository.findByHackathonId(hackathonId).stream()
                 .anyMatch(assignment -> assignment.getStaffId() == mentorStaffId && assignment.getRole() == StaffRole.MENTOR);
         if (alreadyMentor) {
@@ -58,6 +61,7 @@ public class MentorManagementController {
         ));
     }
 
+    // Elenca gli hackathon in cui lo staff corrente e' organizer.
     public List<OrganizerHackathonView> listOrganizerHackathons(long currentStaffId) {
         List<OrganizerHackathonView> result = new ArrayList<>();
         for (StaffAssignment assignment : staffAssignmentRepository.findByStaffId(currentStaffId)) {
@@ -76,6 +80,7 @@ public class MentorManagementController {
         return result;
     }
 
+    // Restituisce i candidati mentor non ancora assegnati a quell'hackathon.
     public List<MentorCandidateView> listMentorCandidates(long currentStaffId, long hackathonId) {
         hackathonRepository.findById(hackathonId)
                 .orElseThrow(() -> new IllegalArgumentException("Hackathon non trovato"));
@@ -105,6 +110,7 @@ public class MentorManagementController {
         return result;
     }
 
+    // Aggiunge piu' mentor in una sola operazione, ignorando i duplicati in input.
     public void addMentors(long currentStaffId, long hackathonId, List<Long> mentorStaffIds) {
         if (mentorStaffIds == null || mentorStaffIds.isEmpty()) {
             throw new IllegalArgumentException("Seleziona almeno un mentor");

@@ -10,6 +10,7 @@ public final class PasswordHasher {
     private PasswordHasher() {
     }
 
+    // Converte una password in hash SHA-256.
     public static String hashPassword(String plainPassword) {
         if (plainPassword == null || plainPassword.isBlank()) {
             throw new IllegalArgumentException("Password is required");
@@ -17,6 +18,7 @@ public final class PasswordHasher {
         return toHex(digest(plainPassword));
     }
 
+    // Confronta password in chiaro e hash salvato.
     public static boolean verifyPassword(String plainPassword, String storedHash) {
         if (plainPassword == null || plainPassword.isBlank() || storedHash == null || storedHash.isBlank()) {
             return false;
@@ -30,6 +32,7 @@ public final class PasswordHasher {
             messageDigest.update(plainPassword.getBytes(StandardCharsets.UTF_8));
             return messageDigest.digest();
         } catch (NoSuchAlgorithmException ex) {
+            // Se manca SHA-256 e' un problema di ambiente, non di input.
             throw new IllegalStateException("Missing hash algorithm: " + HASH_ALGORITHM, ex);
         }
     }

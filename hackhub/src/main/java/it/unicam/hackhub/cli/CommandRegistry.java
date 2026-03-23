@@ -20,10 +20,12 @@ public class CommandRegistry {
 
     private final Map<String, CommandDescriptor> commands = new HashMap<>();
 
+    // Registra un comando visibile a tutti i profili.
     public void register(Command command) {
         register(command, EnumSet.allOf(Audience.class), Set.of());
     }
 
+    // Registra un comando con audience e ruoli staff richiesti.
     public void register(Command command, EnumSet<Audience> visibleFor, Set<StaffRole> requiredStaffRoles) {
         commands.put(command.name(), new CommandDescriptor(
                 command,
@@ -32,6 +34,7 @@ public class CommandRegistry {
         ));
     }
 
+    // Cerca un comando senza applicare filtri di visibilita'.
     public Optional<Command> find(String name) {
         CommandDescriptor descriptor = commands.get(name);
         if (descriptor == null) {
@@ -40,6 +43,7 @@ public class CommandRegistry {
         return Optional.of(descriptor.command());
     }
 
+    // Cerca un comando ma lo restituisce solo se e' visibile al profilo corrente.
     public Optional<Command> findVisible(String name, SessionContext sessionContext) {
         CommandDescriptor descriptor = commands.get(name);
         if (descriptor == null || !isVisible(descriptor, sessionContext)) {
@@ -52,6 +56,7 @@ public class CommandRegistry {
         return new TreeSet<>(commands.keySet());
     }
 
+    // Restituisce i soli comandi eseguibili nella sessione corrente.
     public List<String> getVisibleCommands(SessionContext sessionContext) {
         Audience audience = resolveAudience(sessionContext);
         Set<StaffRole> currentStaffRoles = sessionContext.getStaffRoles();

@@ -38,9 +38,11 @@ public class TeamController {
         this.hackathonRepository = hackathonRepository;
     }
 
+    // Crea un team nuovo e collega subito il creator.
     public Team createTeam(long creatorUserId, String teamName) {
         User creator = userRepository.findById(creatorUserId)
                 .orElseThrow(() -> new IllegalArgumentException("Creator user not found"));
+        // Un utente puo' stare in un solo team.
         if (creator.getTeamId() != null) {
             throw new IllegalStateException("User already belongs to a team");
         }
@@ -58,6 +60,7 @@ public class TeamController {
         return team;
     }
 
+    // Invia un invito a un utente che non appartiene ancora a nessun team.
     public Invitation inviteUser(long teamId, long invitedUserId) {
         if (teamRepository.findById(teamId).isEmpty()) {
             throw new IllegalArgumentException("Team not found");
@@ -68,6 +71,7 @@ public class TeamController {
         if (invitedUser.getTeamId() != null) {
             throw new IllegalStateException("Invited user already in a team");
         }
+        // Evita inviti duplicati ancora aperti per lo stesso utente.
         if (invitationRepository.findPendingByTeamAndUser(teamId, invitedUserId).isPresent()) {
             throw new IllegalStateException("Pending invitation already exists");
         }
@@ -76,12 +80,14 @@ public class TeamController {
         return invitationRepository.save(invitation);
     }
 
+    // Restituisce il team dell'utente loggato.
     public Long getTeamIdOfUser(long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         return user.getTeamId();
     }
 
+    // Elenca gli inviti dell'utente senza informazioni extra.
     public List<Invitation> viewInvites(long userId) {
         if (userRepository.findById(userId).isEmpty()) {
             throw new IllegalArgumentException("User not found");
@@ -89,6 +95,7 @@ public class TeamController {
         return invitationRepository.findByInvitedUserId(userId);
     }
 
+    // Elenca gli inviti con nome team, numero membri e hackathon collegato.
     public List<InvitationView> viewInvitesForUser(long userId) {
         if (userRepository.findById(userId).isEmpty()) {
             throw new IllegalArgumentException("User not found");
@@ -120,6 +127,7 @@ public class TeamController {
                 .toList();
     }
 
+    // Accetta l'invito solo se e' ancora valido e coerente con i vincoli del team.
     public boolean acceptInvitation(long invitationId, long currentUserId) {
         Optional<Invitation> invitationOpt = invitationRepository.findById(invitationId);
         if (invitationOpt.isEmpty()) {
@@ -127,9 +135,11 @@ public class TeamController {
         }
 
         Invitation invitation = invitationOpt.get();
+        // Non si puo' accettare due volte lo stesso invito.
         if (invitation.getStatus() != InvitationStatus.PENDING) {
             return false;
         }
+        // L'invito puo' essere gestito solo dal destinatario.
         if (invitation.getInvitedUserId() != currentUserId) {
             return false;
         }
@@ -150,6 +160,7 @@ public class TeamController {
             Hackathon hackathon = hackathonRepository.findById(registration.getHackathonId())
                     .orElseThrow(() -> new IllegalStateException("Hackathon associato al team non trovato."));
             int currentMembers = userRepository.findByTeamId(invitation.getTeamId()).size();
+            // Se il team e' gia' registrato, non puo' superare il limite dell'hackathon.
             if (currentMembers + 1 > hackathon.getMaxTeamSize()) {
                 throw new IllegalStateException("Team pieno: supererebbe la dimensione massima dell'hackathon.");
             }
@@ -162,6 +173,7 @@ public class TeamController {
         return true;
     }
 
+    // Rifiuta un invito pendente del destinatario corrente.
     public boolean declineInvitation(long invitationId, long currentUserId) {
         Optional<Invitation> invitationOpt = invitationRepository.findById(invitationId);
         if (invitationOpt.isEmpty()) {
@@ -181,6 +193,7 @@ public class TeamController {
         return true;
     }
 
+    // Helper usato per mostrare il numero membri nei riepiloghi inviti.
     private Map<Long, Integer> buildMemberCountByTeam() {
         Map<Long, Integer> counts = new HashMap<>();
         for (User user : userRepository.findAll()) {

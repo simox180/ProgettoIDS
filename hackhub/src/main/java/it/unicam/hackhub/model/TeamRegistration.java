@@ -21,11 +21,13 @@ public class TeamRegistration {
     private long teamId;
     private long hackathonId;
     private LocalDateTime registeredAt;
+    // Quando diventa true, il team viene escluso dai flussi gara.
     private boolean expelled;
 
     public TeamRegistration() {
     }
 
+    // Collega team e hackathon nel momento dell'iscrizione.
     public TeamRegistration(long registrationId, long teamId, long hackathonId, LocalDateTime registeredAt, boolean expelled) {
         this.registrationId = registrationId;
         this.teamId = teamId;

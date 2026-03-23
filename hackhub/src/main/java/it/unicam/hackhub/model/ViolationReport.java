@@ -19,11 +19,13 @@ public class ViolationReport {
     private long mentorStaffId;
     private String description;
     private LocalDateTime createdAt;
+    // Null finche' l'organizer non decide (REJECTED o TEAM_EXPELLED).
     private String decision;
 
     public ViolationReport() {
     }
 
+    // Crea una segnalazione aperta da mentor su un team registrato.
     public ViolationReport(long reportId, long hackathonId, long teamId, long mentorStaffId, String description, LocalDateTime createdAt, String decision) {
         if (reportId < 0) {
             throw new IllegalArgumentException("Report id non valido");

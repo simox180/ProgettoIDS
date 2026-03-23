@@ -33,7 +33,6 @@ public class InMemoryHackathonRepository implements HackathonRepository {
 
     @Override
     public List<Hackathon> findAll() {
-        // TODO: va bene per dati demo; se la lista cresce aggiungiamo ordinamento/paginazione.
         return new ArrayList<>(storage.values());
     }
 

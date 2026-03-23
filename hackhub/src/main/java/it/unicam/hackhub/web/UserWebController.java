@@ -76,6 +76,7 @@ public class UserWebController {
         this.sessionStore = sessionStore;
     }
 
+    // Crea un team per l'utente autenticato.
     @PostMapping("/team")
     public ResponseEntity<TeamDto> createTeam(
             @RequestBody CreateTeamRequest request,
@@ -90,6 +91,7 @@ public class UserWebController {
         return ResponseEntity.status(HttpStatus.CREATED).body(TeamDto.from(createdTeam));
     }
 
+    // Restituisce il team corrente dell'utente.
     @GetMapping("/team")
     public TeamDto getMyTeam(@RequestHeader(value = SESSION_TOKEN_HEADER, required = false) String token) {
         long userId = SessionAuth.requireUserId(sessionStore, token);
@@ -103,6 +105,7 @@ public class UserWebController {
         return TeamDto.from(team);
     }
 
+    // Invia un invito dal team corrente a un altro utente.
     @PostMapping("/team/invitations")
     public ResponseEntity<Map<String, Long>> inviteUser(
             @RequestBody InviteUserRequest request,
@@ -127,6 +130,7 @@ public class UserWebController {
                 .body(Map.of("invitationId", invitation.getInvitationId()));
     }
 
+    // Elenca gli inviti ricevuti.
     @GetMapping("/invitations")
     public List<InvitationDto> listInvitations(
             @RequestHeader(value = SESSION_TOKEN_HEADER, required = false) String token) {
@@ -143,6 +147,7 @@ public class UserWebController {
                 .toList();
     }
 
+    // Accetta o rifiuta un invito.
     @PostMapping("/invitations/{invitationId}")
     public Map<String, String> manageInvitation(
             @PathVariable long invitationId,
@@ -162,6 +167,7 @@ public class UserWebController {
         return Map.of("status", "ok");
     }
 
+    // Mostra gli hackathon ancora registrabili per il team.
     @GetMapping("/registerable-hackathons")
     public List<HackathonDto> listRegisterableHackathons(
             @RequestHeader(value = SESSION_TOKEN_HEADER, required = false) String token) {
@@ -169,6 +175,7 @@ public class UserWebController {
         LocalDateTime now = LocalDateTime.now();
 
         return teamRegistrationController.listRegisterableHackathons(userId).stream()
+                // Evita hackathon con deadline gia' passata.
                 .filter(option -> option.registrationDeadline() == null
                         || !option.registrationDeadline().isBefore(now))
                 .map(option -> hackathonController.getHackathonDetails(option.hackathonId()))
@@ -177,6 +184,7 @@ public class UserWebController {
                 .toList();
     }
 
+    // Registra il team a un hackathon.
     @PostMapping("/registration")
     public ResponseEntity<TeamRegistrationDto> registerTeam(
             @RequestBody RegisterTeamRequest request,
@@ -193,6 +201,7 @@ public class UserWebController {
         );
     }
 
+    // Restituisce la registrazione attuale del team.
     @GetMapping("/registration")
     public TeamRegistrationDto getMyRegistration(
             @RequestHeader(value = SESSION_TOKEN_HEADER, required = false) String token) {
@@ -202,6 +211,7 @@ public class UserWebController {
                 .orElseThrow(() -> new IllegalArgumentException("Nessuna registrazione"));
     }
 
+    // Recupera la submission del team, se presente.
     @GetMapping("/submission")
     public ResponseEntity<SubmissionDto> getMySubmission(
             @RequestHeader(value = SESSION_TOKEN_HEADER, required = false) String token) {
@@ -214,6 +224,7 @@ public class UserWebController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    // Invia la prima submission del team.
     @PostMapping("/submission")
     public SubmissionDto submit(
             @RequestBody SubmitRequest request,
@@ -222,6 +233,7 @@ public class UserWebController {
         long teamId = requireTeamId(userId);
         String content = normalizeContent(request);
 
+        // Qui consento solo il primo invio.
         if (submissionController.viewMySubmission(teamId).isPresent()) {
             throw new IllegalStateException("Submission gia inviata: usa update");
         }
@@ -229,6 +241,7 @@ public class UserWebController {
         return SubmissionDto.from(submissionController.submitOrUpdate(userId, teamId, content));
     }
 
+    // Aggiorna una submission gia' esistente.
     @PutMapping("/submission")
     public SubmissionDto update(
             @RequestBody SubmitRequest request,
@@ -237,6 +250,7 @@ public class UserWebController {
         long teamId = requireTeamId(userId);
         String content = normalizeContent(request);
 
+        // Qui invece e' obbligatorio che esista gia' una submission.
         if (submissionController.viewMySubmission(teamId).isEmpty()) {
             throw new IllegalStateException("Nessuna submission: usa submit");
         }
@@ -244,6 +258,7 @@ public class UserWebController {
         return SubmissionDto.from(submissionController.submitOrUpdate(userId, teamId, content));
     }
 
+    // Crea una richiesta supporto per il team corrente.
     @PostMapping("/support/requests")
     public ResponseEntity<SupportRequestDto> createSupportRequest(
             @RequestBody CreateSupportRequest request,
@@ -260,6 +275,7 @@ public class UserWebController {
         return ResponseEntity.status(HttpStatus.CREATED).body(SupportRequestDto.from(supportRequest));
     }
 
+    // Elenca le richieste supporto gia' aperte dal team.
     @GetMapping("/support/requests")
     public List<SupportRequestDto> listMySupportRequests(
             @RequestHeader(value = SESSION_TOKEN_HEADER, required = false) String token) {
@@ -280,6 +296,7 @@ public class UserWebController {
                 .toList();
     }
 
+    // Elenca le proposte call disponibili.
     @GetMapping("/calls/proposals")
     public List<CallProposalDto> listProposals(
             @RequestHeader(value = SESSION_TOKEN_HEADER, required = false) String token) {
@@ -289,6 +306,7 @@ public class UserWebController {
                 .toList();
     }
 
+    // Prenota una proposta call disponibile.
     @PostMapping("/calls/proposals/{proposalId}/book")
     public ResponseEntity<CallBookingDto> bookProposal(
             @PathVariable long proposalId,
@@ -312,6 +330,7 @@ public class UserWebController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    // Accetta solo le azioni consentite sugli inviti.
     private String normalizeAction(String action) {
         if (action == null || action.isBlank()) {
             throw new IllegalArgumentException("Action non valida");
@@ -323,6 +342,7 @@ public class UserWebController {
         return normalized;
     }
 
+    // Recupera l'id team e fallisce se l'utente non e' in un team.
     private long requireTeamId(long userId) {
         Long teamId = teamController.getTeamIdOfUser(userId);
         if (teamId == null) {
@@ -331,6 +351,7 @@ public class UserWebController {
         return teamId;
     }
 
+    // Valida e pulisce il contenuto della submission.
     private String normalizeContent(SubmitRequest request) {
         String content = request == null ? null : request.content();
         if (content == null || content.isBlank()) {

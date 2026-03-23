@@ -32,6 +32,7 @@ public class AuthWebController {
         this.sessionStore = sessionStore;
     }
 
+    // Registra un nuovo utente partendo dai dati HTTP.
     @PostMapping("/register")
     public ResponseEntity<Map<String, Long>> register(@RequestBody RegisterRequest request) {
         if (request == null) {
@@ -49,6 +50,7 @@ public class AuthWebController {
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("userId", userId));
     }
 
+    // Autentica USER/STAFF e crea la sessione.
     @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest request) {
         if (request == null) {
@@ -66,6 +68,7 @@ public class AuthWebController {
         Long principalId = loginResult.principalId();
 
         if (loginResult.outcome() == LoginOutcome.USER_AUTHENTICATED && principalId != null) {
+            // La sessione nasce qui: dal dominio passiamo a token HTTP.
             SessionPrincipal principal = new SessionPrincipal(SessionPrincipal.ProfileType.USER, principalId);
             String token = sessionStore.create(principal);
             return new LoginResponse(token, principal.getType().name(), principal.getId());
@@ -80,6 +83,7 @@ public class AuthWebController {
         throw new IllegalArgumentException("Credenziali non valide");
     }
 
+    // Invalida la sessione corrente.
     @PostMapping("/logout")
     public Map<String, String> logout(
             @RequestHeader(value = SESSION_TOKEN_HEADER, required = false) String token) {
@@ -87,6 +91,7 @@ public class AuthWebController {
         return Map.of("status", "ok");
     }
 
+    // Uniforma il tipo login per il controller applicativo.
     private String normalizeLoginType(String type) {
         if (type == null || type.isBlank()) {
             throw new IllegalArgumentException("Tipo login non valido");
@@ -99,6 +104,7 @@ public class AuthWebController {
         return normalized;
     }
 
+    // Converte stringhe vuote in null per semplificare i controlli.
     private String trimToNull(String value) {
         if (value == null) {
             return null;

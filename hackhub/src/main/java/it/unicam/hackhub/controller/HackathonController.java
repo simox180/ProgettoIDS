@@ -57,14 +57,17 @@ public class HackathonController {
         this.paymentSystem = paymentSystem;
     }
 
+    // Restituisce tutti gli hackathon.
     public List<Hackathon> listHackathons() {
         return hackathonRepository.findAll();
     }
 
+    // Restituisce il dettaglio di un hackathon.
     public Optional<Hackathon> getHackathonDetails(long hackathonId) {
         return hackathonRepository.findById(hackathonId);
     }
 
+    // Elenca lo staff selezionabile durante la creazione hackathon.
     public List<StaffSelectView> listSelectableStaff(long currentStaffId) {
         if (currentStaffId <= 0) {
             throw new IllegalArgumentException("Staff non valido");
@@ -85,6 +88,7 @@ public class HackathonController {
         return result;
     }
 
+    // Elenca lo staff selezionabile filtrato per ruolo.
     public List<StaffSelectView> listSelectableStaffByRole(long currentStaffId, StaffRole role) {
         if (currentStaffId <= 0) {
             throw new IllegalArgumentException("Staff non valido");
@@ -112,6 +116,7 @@ public class HackathonController {
         return result;
     }
 
+    // Crea un hackathon nuovo con staff iniziale organizer/judge/mentor.
     public Hackathon createHackathon(long currentStaffId,
                                      String name,
                                      String regulation,
@@ -144,6 +149,8 @@ public class HackathonController {
         if (Double.isNaN(prizeAmount) || Double.isInfinite(prizeAmount) || prizeAmount < 0) {
             throw new IllegalArgumentException("Premio non valido");
         }
+
+        // Le date devono essere coerenti prima di creare l'hackathon.
         if (regDeadline == null || startDate == null || endDate == null) {
             throw new IllegalArgumentException("Date hackathon non valide");
         }
@@ -162,12 +169,14 @@ public class HackathonController {
         if (mentorStaffIds == null || mentorStaffIds.isEmpty()) {
             throw new IllegalArgumentException("Almeno un mentor e richiesto");
         }
+        // Judge e organizer devono essere persone diverse.
         if (judgeStaffId <= 0) {
             throw new IllegalArgumentException("Judge non valido");
         }
         if (judgeStaffId == currentStaffId) {
             throw new IllegalArgumentException("Judge deve essere diverso dall'organizer");
         }
+        // Judge e mentor devono avere davvero quel ruolo.
         if (!hasAnyAssignmentWithRole(judgeStaffId, StaffRole.JUDGE)) {
             throw new IllegalArgumentException("Judge non valido: staff non e un giudice");
         }
@@ -185,6 +194,7 @@ public class HackathonController {
         if (mentorIds.isEmpty()) {
             throw new IllegalArgumentException("Almeno un mentor e richiesto");
         }
+        // Evita che la stessa persona venga messa sia judge sia mentor.
         if (mentorIds.contains(judgeStaffId)) {
             throw new IllegalArgumentException("Judge non puo essere anche mentor");
         }
@@ -217,6 +227,7 @@ public class HackathonController {
                 .build();
         Hackathon savedHackathon = hackathonRepository.save(hackathon);
 
+        // Le assegnazioni vengono salvate subito dopo la creazione.
         List<StaffAssignment> assignments = new ArrayList<>();
         assignments.add(new StaffAssignment(0L, currentStaffId, savedHackathon.getHackathonId(), StaffRole.ORGANIZER));
         assignments.add(new StaffAssignment(0L, judgeStaffId, savedHackathon.getHackathonId(), StaffRole.JUDGE));
@@ -230,11 +241,13 @@ public class HackathonController {
         return savedHackathon;
     }
 
+    // Porta l'hackathon allo stato successivo.
     public Hackathon advanceStatus(long currentStaffId, long hackathonId) {
         Hackathon hackathon = hackathonRepository.findById(hackathonId)
                 .orElseThrow(() -> new IllegalArgumentException("Hackathon not found"));
         ensureOrganizer(currentStaffId, hackathonId, "Not authorized: only organizer can advance status");
 
+        // La sequenza ammessa e': REGISTRATION -> RUNNING -> REVIEW -> CLOSED.
         HackathonStatus nextStatus = switch (hackathon.getStatus()) {
             case REGISTRATION -> HackathonStatus.RUNNING;
             case RUNNING -> HackathonStatus.REVIEW;
@@ -246,12 +259,14 @@ public class HackathonController {
         return hackathonRepository.save(hackathon);
     }
 
+    // Imposta il winner e tenta il pagamento del premio.
     public Hackathon setWinner(long currentStaffId, long hackathonId, long teamId) {
         Hackathon hackathon = hackathonRepository.findById(hackathonId)
                 .orElseThrow(() -> new IllegalArgumentException("Hackathon not found"));
         ensureOrganizer(currentStaffId, hackathonId, "Not authorized: only organizer can manage prize");
 
         Long existingWinnerTeamId = hackathon.getWinnerTeamId();
+        // Se e' gia' pagato lo stesso team, l'operazione non cambia nulla.
         if (existingWinnerTeamId != null) {
             if (existingWinnerTeamId == teamId && hackathon.isPrizePaid()) {
                 return hackathon;
@@ -265,6 +280,7 @@ public class HackathonController {
             throw new IllegalStateException("Hackathon not in REVIEW");
         }
 
+        // Il winner deve essere un team registrato e non espulso.
         TeamRegistration registration = teamRegistrationRepository
                 .findByTeamIdAndHackathonId(teamId, hackathonId)
                 .orElseThrow(() -> new IllegalArgumentException("Team not registered to this hackathon"));
@@ -281,6 +297,7 @@ public class HackathonController {
                         "Cannot set winner: selected team submission not evaluated"
                 ));
 
+        // Prima del winner tutti i team non espulsi devono avere submission e valutazione.
         ensureAllTeamsEvaluated(hackathonId);
 
         if (hackathon.getPrizeAmount() == null) {
@@ -294,6 +311,7 @@ public class HackathonController {
             throw new IllegalStateException("Winner team name not configured");
         }
 
+        // Se il pagamento fallisce non salviamo winner/prizePaid.
         boolean paid = paymentSystem.payPrize(hackathon.getPrizeAmount(), winnerTeamName);
         if (!paid) {
             String paymentError = paymentSystem.getLastErrorMessage();
@@ -308,6 +326,7 @@ public class HackathonController {
         return hackathonRepository.save(hackathon);
     }
 
+    // Eroga il premio se il winner e' gia' stato deciso.
     public String payPrize(long currentStaffId, long hackathonId) {
         Hackathon hackathon = hackathonRepository.findById(hackathonId)
                 .orElseThrow(() -> new IllegalArgumentException("Hackathon not found"));
@@ -317,6 +336,7 @@ public class HackathonController {
             return "Premio gia erogato: teamId=" + hackathon.getWinnerTeamId()
                     + ", amount=" + hackathon.getPrizeAmount();
         }
+        // Il pagamento manuale e' ammesso solo dopo la chiusura.
         if (!hackathon.isClosed()) {
             throw new IllegalStateException("Hackathon must be CLOSED");
         }
@@ -351,6 +371,7 @@ public class HackathonController {
                 + ", amount=" + hackathon.getPrizeAmount();
     }
 
+    // Verifica che lo staff sia organizer dell'hackathon.
     private void ensureOrganizer(long currentStaffId, long hackathonId, String notAuthorizedMessage) {
         boolean isOrganizer = staffAssignmentRepository.findByHackathonIdAndRole(hackathonId, StaffRole.ORGANIZER)
                 .stream()
@@ -360,6 +381,7 @@ public class HackathonController {
         }
     }
 
+    // Prima di proclamare il winner controlla che tutti i team attivi siano valutati.
     private void ensureAllTeamsEvaluated(long hackathonId) {
         List<TeamRegistration> registrations = teamRegistrationRepository.findByHackathonId(hackathonId);
         for (TeamRegistration registration : registrations) {
@@ -382,6 +404,7 @@ public class HackathonController {
         }
     }
 
+    // Permesso creazione: organizer gia' assegnato o caso iniziale senza organizer.
     private void ensureCanCreateHackathon(long currentStaffId) {
         staffMemberRepository.findById(currentStaffId)
                 .orElseThrow(() -> new IllegalArgumentException("Organizer non trovato"));
@@ -392,7 +415,7 @@ public class HackathonController {
             return;
         }
 
-        // Bootstrap rule: when no organizer assignment exists yet, allow first creation.
+        // Eccezione iniziale: il primo organizer puo' creare il primo hackathon.
         boolean anyOrganizerExists = hackathonRepository.findAll().stream()
                 .map(Hackathon::getHackathonId)
                 .anyMatch(hackathonId ->
@@ -403,6 +426,7 @@ public class HackathonController {
         }
     }
 
+    // Controlla se lo staff ha almeno un'assegnazione con quel ruolo.
     private boolean hasAnyAssignmentWithRole(long staffId, StaffRole role) {
         return staffAssignmentRepository.findByStaffId(staffId).stream()
                 .anyMatch(assignment -> assignment.getRole() == role);

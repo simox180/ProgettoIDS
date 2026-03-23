@@ -29,11 +29,13 @@ public class AuthController {
         this.staffAssignmentRepository = staffAssignmentRepository;
     }
 
+    // Gestisce il login scegliendo il flusso USER o STAFF.
     public LoginResult login(String loginType, String identifier, String password) {
         if (isBlank(loginType) || isBlank(identifier) || isBlank(password)) {
             return LoginResult.invalidInput();
         }
 
+        // USER e STAFF hanno archivi diversi, quindi qui separiamo subito i due flussi.
         if ("USER".equalsIgnoreCase(loginType)) {
             return loginUser(identifier, password);
         }
@@ -43,10 +45,12 @@ public class AuthController {
         return LoginResult.invalidLoginType();
     }
 
+    // Registra un nuovo utente applicativo con username univoco.
     public long registerUser(String userName, String password) {
         if (isBlank(userName) || isBlank(password)) {
             throw new IllegalArgumentException("Username and password are required");
         }
+        // Evita account duplicati gia' in fase di registrazione.
         if (userRepository.findByUserName(userName).isPresent()) {
             throw new IllegalStateException("Username already used");
         }
@@ -56,8 +60,10 @@ public class AuthController {
         return savedUser.getUserId();
     }
 
+    // Raccoglie tutti i ruoli trovati nelle assegnazioni dello staff.
     public Set<StaffRole> loadStaffRoles(long staffId) {
         Set<StaffRole> roles = EnumSet.noneOf(StaffRole.class);
+        // Uno staff puo' avere ruoli diversi in hackathon diversi: qui li raccogliamo tutti.
         for (StaffAssignment assignment : staffAssignmentRepository.findByStaffId(staffId)) {
             roles.add(assignment.getRole());
         }

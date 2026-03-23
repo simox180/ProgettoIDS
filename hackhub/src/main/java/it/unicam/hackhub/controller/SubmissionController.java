@@ -30,6 +30,7 @@ public class SubmissionController {
         this.userRepository = userRepository;
     }
 
+    // Crea o aggiorna la submission del team dell'utente corrente.
     public Submission submitOrUpdate(long currentUserId, long teamId, String content) {
         if (teamId <= 0) {
             throw new IllegalArgumentException("Team not found");
@@ -40,27 +41,30 @@ public class SubmissionController {
 
         User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        // La submission si puo' toccare solo dal proprio team.
         if (user.getTeamId() == null || user.getTeamId() != teamId) {
             throw new IllegalArgumentException("User is not a member of this team");
         }
 
         TeamRegistration registration = teamRegistrationRepository.findByTeamId(teamId)
                 .orElseThrow(() -> new IllegalArgumentException("Team is not registered to any hackathon"));
+        // Un team espulso non puo' inviare o modificare submission.
         if (registration.isExpelled()) {
             throw new IllegalStateException("Team expelled");
         }
 
         Hackathon hackathon = hackathonRepository.findById(registration.getHackathonId())
                 .orElseThrow(() -> new IllegalArgumentException("Hackathon not found"));
+        // Per inviare deve essere nella fase giusta.
         if (!hackathon.canSubmit()) {
             throw new IllegalStateException("Hackathon is not accepting submissions");
         }
-
         LocalDateTime now = LocalDateTime.now();
         if (hackathon.getSubmissionDeadline() != null && now.isAfter(hackathon.getSubmissionDeadline())) {
             throw new IllegalStateException("Scadenza invio sottomissione superata.");
         }
 
+        // Se esiste gia', la aggiorno; altrimenti creo la prima submission.
         Submission submission = submissionRepository.findByRegistrationId(registration.getRegistrationId())
                 .map(existing -> {
                     existing.setContent(content);
@@ -78,6 +82,7 @@ public class SubmissionController {
         return submissionRepository.save(submission);
     }
 
+    // Restituisce la submission del team, se presente.
     public Optional<Submission> viewMySubmission(long teamId) {
         if (teamId <= 0) {
             return Optional.empty();

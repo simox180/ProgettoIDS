@@ -37,11 +37,14 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     @Override
+    // Entry point Spring del seed dati.
     public void run(String... args) {
         seed();
     }
 
+    // Crea o riusa dati demo base per staff, hackathon e ruoli.
     public void seed() {
+        // I metodi ensure* evitano duplicati se il seed gira piu' volte.
         StaffMember organizerOne = ensureStaff("Organizer One", ORGANIZER_USERNAME, "organizer1pass");
         StaffMember judgeOne = ensureStaff("Judge One", JUDGE_USERNAME, "judge1pass");
         StaffMember mentorOne = ensureStaff("Mentor One", MENTOR_USERNAME, "mentor1pass");
@@ -79,6 +82,7 @@ public class DataSeeder implements CommandLineRunner {
         assignCoreRoles(organizerTwo, judgeTwo, mentorTwo, hackathonTwo);
     }
 
+    // Restituisce lo staff esistente o lo crea con la password hashata.
     private StaffMember ensureStaff(String name, String username, String plainPassword) {
         return staffMemberRepository.findByUsername(username)
                 .orElseGet(() -> staffMemberRepository.save(
@@ -91,6 +95,7 @@ public class DataSeeder implements CommandLineRunner {
                 ));
     }
 
+    // Restituisce l'hackathon esistente con quel nome o lo crea.
     private Hackathon ensureHackathon(String name,
                                       String regulation,
                                       LocalDateTime registrationDeadline,
@@ -120,12 +125,14 @@ public class DataSeeder implements CommandLineRunner {
                 ));
     }
 
+    // Assegna i ruoli core minimi all'hackathon demo.
     private void assignCoreRoles(StaffMember organizer, StaffMember judge, StaffMember mentor, Hackathon hackathon) {
         ensureAssignment(organizer.getStaffId(), hackathon.getHackathonId(), StaffRole.ORGANIZER);
         ensureAssignment(judge.getStaffId(), hackathon.getHackathonId(), StaffRole.JUDGE);
         ensureAssignment(mentor.getStaffId(), hackathon.getHackathonId(), StaffRole.MENTOR);
     }
 
+    // Salva l'assegnazione solo se non esiste gia'.
     private void ensureAssignment(long staffId, long hackathonId, StaffRole role) {
         boolean exists = staffAssignmentRepository.findByHackathonIdAndRole(hackathonId, role).stream()
                 .anyMatch(assignment -> assignment.getStaffId() == staffId);

@@ -24,8 +24,8 @@ public class DataSeeder {
         this.staffAssignmentRepository = staffAssignmentRepository;
     }
 
+    // Inserisce dati demo minimi per usare la CLI in locale.
     public void seed() {
-        // Dati demo minimi per usare subito la CLI senza setup manuale.
         StaffMember organizer = staffMemberRepository.save(new StaffMember(
                 0,
                 "Olivia Organizer",
@@ -81,12 +81,10 @@ public class DataSeeder {
                 .winnerTeamId(null)
                 .build());
 
-        // H1: 1 organizer, 1 judge, >=1 mentor
         staffAssignmentRepository.save(new StaffAssignment(0, organizer.getStaffId(), registrationHackathon.getHackathonId(), StaffRole.ORGANIZER));
         staffAssignmentRepository.save(new StaffAssignment(0, judge.getStaffId(), registrationHackathon.getHackathonId(), StaffRole.JUDGE));
         staffAssignmentRepository.save(new StaffAssignment(0, mentorOne.getStaffId(), registrationHackathon.getHackathonId(), StaffRole.MENTOR));
 
-        // H2: 1 organizer, 1 judge, >=1 mentor
         staffAssignmentRepository.save(new StaffAssignment(0, organizer.getStaffId(), runningHackathon.getHackathonId(), StaffRole.ORGANIZER));
         staffAssignmentRepository.save(new StaffAssignment(0, judge.getStaffId(), runningHackathon.getHackathonId(), StaffRole.JUDGE));
         staffAssignmentRepository.save(new StaffAssignment(0, mentorTwo.getStaffId(), runningHackathon.getHackathonId(), StaffRole.MENTOR));

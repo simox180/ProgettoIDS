@@ -38,6 +38,7 @@ public class SubmissionAccessController {
         this.submissionRepository = submissionRepository;
     }
 
+    // Elenca gli hackathon assegnati allo staff con i ruoli trovati.
     public List<AssignedHackathonView> listAssignedHackathons(long currentStaffId) {
         Map<Long, List<StaffAssignment>> assignmentsByHackathon = staffAssignmentRepository.findByStaffId(currentStaffId).stream()
                 .collect(Collectors.groupingBy(StaffAssignment::getHackathonId));
@@ -63,8 +64,10 @@ public class SubmissionAccessController {
                 .toList();
     }
 
+    // Restituisce le submission di un hackathon solo allo staff assegnato.
     public List<Submission> listSubmissionsForHackathon(long currentStaffId, long hackathonId) {
         List<StaffAssignment> assignments = staffAssignmentRepository.findByHackathonId(hackathonId);
+        // Lo staff vede solo le submission degli hackathon a cui e' assegnato.
         boolean assigned = assignments.stream()
                 .anyMatch(assignment -> assignment.getStaffId() == currentStaffId);
         if (!assigned) {
@@ -80,6 +83,7 @@ public class SubmissionAccessController {
         return submissions;
     }
 
+    // Restituisce le submission in formato leggero per le liste.
     public List<SubmissionView> listSubmissionViewsForHackathon(long currentStaffId, long hackathonId) {
         return listSubmissionsForHackathon(currentStaffId, hackathonId).stream()
                 .sorted(Comparator.comparingLong(Submission::getSubmissionId))
@@ -92,6 +96,7 @@ public class SubmissionAccessController {
                 .toList();
     }
 
+    // Restituisce il dettaglio di una submission verificando prima l'accesso allo stesso hackathon.
     public Optional<SubmissionDetailView> getSubmissionDetailForHackathon(long currentStaffId,
                                                                            long hackathonId,
                                                                            long submissionId) {
@@ -119,6 +124,7 @@ public class SubmissionAccessController {
                                         String status,
                                         String location,
                                         Set<StaffRole> roles) {
+        // Mostra i ruoli in una stringa compatta per CLI/API.
         public String rolesLabel() {
             if (roles == null || roles.isEmpty()) {
                 return "-";

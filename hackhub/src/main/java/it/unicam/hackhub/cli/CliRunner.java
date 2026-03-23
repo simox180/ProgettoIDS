@@ -19,12 +19,14 @@ public class CliRunner implements ApplicationRunner {
     }
 
     @Override
+    // Avvia la CLI in thread separato solo in ambiente interattivo.
     public void run(ApplicationArguments args) {
         if (System.console() == null) {
             logger.info("CLI disabled: no console");
             return;
         }
 
+        // Thread separato per non bloccare l'avvio REST.
         Thread cliThread = new Thread(() -> {
             try {
                 springCliBootstrap.runCli();
